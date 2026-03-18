@@ -63,6 +63,17 @@ export default function ProductCard({ producto, onOpen }) {
             ¡Últimas {producto.stock}!
           </div>
         )}
+        {producto.por_encargo && (
+          <div style={{
+            position: 'absolute', top: 10, left: 10,
+            background: '#f59e0b', color: 'white',
+            fontSize: 10, fontWeight: 700, padding: '3px 8px',
+            borderRadius: 20, letterSpacing: .5,
+            boxShadow: '0 2px 6px rgba(0,0,0,.2)',
+          }}>
+            📦 POR ENCARGO
+          </div>
+        )}
       </div>
 
       {/* Info */}
