@@ -5,7 +5,7 @@ import { TEMPLATES } from '../themes/index.js'
 import TemplateSelector from './TemplateSelector.jsx'
 
 const API = import.meta.env.VITE_API_URL || ''
-const CATS = ['Suplementos','Bebidas','Proteínas','Belleza','Higiene','Accesorios','Infusiones','Otros']
+const CATS = ['Suplementos','Bebidas','Proteínas','Belleza','Higiene','Accesorios','Infusiones','Combos Herbales','Alimentos','Otros']
 
 export default function PanelAdmin({ onClose }) {
   const { authHeader, showToast, storeConfig, setTemplate, updateColors } = useStore()
