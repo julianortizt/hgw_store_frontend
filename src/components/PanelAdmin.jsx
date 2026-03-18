@@ -101,7 +101,7 @@ export default function PanelAdmin({ onClose }) {
 
   const editarProducto = (p) => {
     setForm({ nombre:p.nombre, descripcion:p.descripcion||'', beneficios:p.beneficios||'',
-      categoria:p.categoria||'Suplementos', imagen_url:p.imagen_url||'', precio:p.precio, stock:p.stock, cliente_id:p.cliente_id||1 })
+      categoria:p.categoria||'Suplementos', imagen_url:p.imagen_url||'', precio:p.precio, stock:p.stock, cliente_id:p.cliente_id||1, por_encargo:p.por_encargo||false })
     setEditId(p.id)
     setTab('productos')
     window.scrollTo({ top: 0, behavior: 'smooth' })
