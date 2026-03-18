@@ -18,6 +18,8 @@ export default function PanelAdmin({ onClose }) {
   const [editId, setEditId] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [subiendo, setSubiendo] = useState(false)
+  const [cargandoCSV, setCargandoCSV] = useState(false)
+  const [resultadoCSV, setResultadoCSV] = useState(null)
   const [subiendoBanner, setSubiendoBanner] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [slides, setSlides] = useState([])
@@ -225,6 +227,20 @@ export default function PanelAdmin({ onClose }) {
                     />
                   </div>
                 ))}
+                {/* Por encargo */}
+                <div style={{ gridColumn:'1/-1', display:'flex', alignItems:'center', gap:10,
+                  background:'#FFF8E1', borderRadius:8, padding:'10px 14px',
+                  border:'1px solid #FFE082' }}>
+                  <input type="checkbox" id="por_encargo"
+                    checked={form.por_encargo}
+                    onChange={e => setForm(f => ({ ...f, por_encargo: e.target.checked }))}
+                    style={{ width:18, height:18, cursor:'pointer', accentColor:'#F59E0B' }} />
+                  <label htmlFor="por_encargo" style={{ fontSize:13, fontWeight:600,
+                    color:'#92400E', cursor:'pointer' }}>
+                    📦 Producto por encargo — no disponible en Colombia, se solicita especialmente
+                  </label>
+                </div>
+
                 {/* Imagen — URL o subir desde PC */}
                 <div style={{ gridColumn:'1/-1' }}>
                   <label style={{ fontSize:12, fontWeight:600, color:'#374151',
@@ -291,6 +307,79 @@ export default function PanelAdmin({ onClose }) {
                     Cancelar
                   </button>
                 )}
+              </div>
+
+              {/* Carga masiva CSV */}
+              <div style={{ marginTop:20, paddingTop:16, borderTop:'1px solid #e5e7eb' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+                  <label style={{
+                    background: cargandoCSV ? '#e5e7eb' : '#4f46e5',
+                    color: cargandoCSV ? '#9ca3af' : 'white',
+                    padding:'8px 16px', borderRadius:8, fontSize:12,
+                    fontWeight:600, cursor: cargandoCSV ? 'wait' : 'pointer',
+                    display:'flex', alignItems:'center', gap:6,
+                  }}>
+                    {cargandoCSV ? '⏳ Cargando...' : '📊 Carga Masiva CSV'}
+                    <input type="file" accept=".csv" style={{ display:'none' }}
+                      disabled={cargandoCSV}
+                      onChange={async e => {
+                        const file = e.target.files[0]
+                        if (!file) return
+                        setCargandoCSV(true)
+                        setResultadoCSV(null)
+                        try {
+                          const text = await file.text()
+                          const lines = text.trim().split('\n')
+                          const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''))
+                          let ok = 0, err = 0
+                          for (let i = 1; i < lines.length; i++) {
+                            if (!lines[i].trim()) continue
+                            const vals = lines[i].split(',').map(v => v.trim().replace(/"/g,''))
+                            const obj = {}
+                            headers.forEach((h,idx) => obj[h] = vals[idx] || '')
+                            try {
+                              const r = await fetch(`${API}/api/productos`, {
+                                method:'POST', headers,
+                                body: JSON.stringify({
+                                  nombre: obj.nombre || obj.Nombre,
+                                  descripcion: obj.descripcion || obj.Descripcion || '',
+                                  beneficios: obj.beneficios || obj.Beneficios || '',
+                                  categoria: obj.categoria || obj.Categoria || 'Otros',
+                                  imagen_url: obj.imagen_url || obj.Imagen || '',
+                                  precio: parseFloat(obj.precio || obj.Precio || 0),
+                                  stock: parseInt(obj.stock || obj.Stock || 0),
+                                  cliente_id: 1,
+                                })
+                              })
+                              const d = await r.json()
+                              if (d.id || d.success) ok++; else err++
+                            } catch { err++ }
+                          }
+                          setResultadoCSV({ ok, err, total: lines.length - 1 })
+                          if (ok > 0) loadTab()
+                        } catch(e) { showToast('Error leyendo CSV', 'error') }
+                        finally { setCargandoCSV(false); e.target.value = '' }
+                      }} />
+                  </label>
+                  <a href="data:text/csv;charset=utf-8,nombre,descripcion,beneficios,categoria,imagen_url,precio,stock%0AGanoderma Coffee,Café medicinal,Refuerza el sistema inmune,Bebidas,https://url.com/img.jpg,35000,50"
+                    download="plantilla_productos.csv"
+                    style={{ fontSize:12, color:'#4f46e5', textDecoration:'none', fontWeight:600 }}>
+                    📥 Descargar plantilla CSV
+                  </a>
+                </div>
+                {resultadoCSV && (
+                  <div style={{ marginTop:10, padding:'8px 14px', borderRadius:8, fontSize:12,
+                    background: resultadoCSV.err > 0 ? '#fff7ed' : '#f0fdf4',
+                    color: resultadoCSV.err > 0 ? '#92400e' : '#166534',
+                    border: `1px solid ${resultadoCSV.err > 0 ? '#fed7aa' : '#bbf7d0'}` }}>
+                    ✅ {resultadoCSV.ok} productos cargados
+                    {resultadoCSV.err > 0 && ` · ❌ ${resultadoCSV.err} errores`}
+                    {' '}de {resultadoCSV.total} total
+                  </div>
+                )}
+                <p style={{ fontSize:11, color:'#9ca3af', marginTop:6 }}>
+                  Columnas: nombre, descripcion, beneficios, categoria, imagen_url, precio, stock
+                </p>
               </div>
             </div>
 
